@@ -24,3 +24,9 @@ async def health_check():
         "status": "ok",
         "dummy_mode": settings.DUMMY_MODE,
     }
+
+
+# Dummy 모드: Mock 라우터 마운트
+if settings.DUMMY_MODE:
+    from app.mock.router import router as mock_router
+    app.include_router(mock_router)

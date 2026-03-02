@@ -30,7 +30,10 @@ async def health_check():
 from app.auth.router import router as auth_router
 app.include_router(auth_router)
 
-# Dummy 모드: Mock 라우터 마운트
+# 모드에 따라 라우터 선택: Dummy → Mock, 일반 → CodeHub BE 프록시
 if settings.DUMMY_MODE:
     from app.mock.router import router as mock_router
     app.include_router(mock_router)
+else:
+    from app.proxy.router import router as proxy_router
+    app.include_router(proxy_router)

@@ -26,6 +26,10 @@ async def health_check():
     }
 
 
+# 인증 라우터 (모든 모드에서 사용)
+from app.auth.router import router as auth_router
+app.include_router(auth_router)
+
 # Dummy 모드: Mock 라우터 마운트
 if settings.DUMMY_MODE:
     from app.mock.router import router as mock_router

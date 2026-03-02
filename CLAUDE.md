@@ -38,6 +38,40 @@ Next.js FE → FastAPI BE → CodeHub BE (DRF)
 - `codehub-idp-sso-spec.md`: SSO 인증 흐름 원본
 - `codehub-rbac-model-api-spec.md`: CodeHub BE RBAC 모델 및 API 스펙 원본
 
+## 개발 커맨드
+
+```bash
+# Backend (Dummy 모드)
+cd backend && uvicorn app.main:app --reload --port 8000
+
+# Frontend
+cd frontend && npm run dev       # 개발 서버
+cd frontend && npm run build     # 프로덕션 빌드
+cd frontend && npm run lint      # ESLint
+```
+
+## 프로젝트 구조 핵심
+
+```
+frontend/src/
+├── app/(main)/          # 인증 보호 레이아웃 아래의 모든 관리 페이지
+│   ├── layout.tsx       # 인증 체크 + Sidebar + Header
+│   ├── page.tsx         # 대시보드
+│   ├── users/           # 유저 관리
+│   ├── groups/          # 그룹 관리
+│   ├── permissions/     # 권한 관리
+│   └── menus/           # 메뉴 관리
+├── app/login/           # SSO 로그인
+├── app/auth/            # SSO 콜백 (token 저장 + 권한 체크)
+├── components/features/ # Pagination, ConfirmDialog, RelationManager
+└── lib/                 # api.ts(fetch wrapper), auth.ts(토큰), types.ts
+
+backend/app/
+├── auth/                # SSO 라우터 + JWT 유틸 (모든 모드 공통)
+├── mock/                # Dummy 모드 인메모리 CRUD
+└── proxy/               # 일반 모드: CodeHub BE 프록시 + TTL 캐시
+```
+
 ## 디자인 가이드
 
 - Primary: `#0d6154`, Secondary: `#46cf94`, 배경: 흰색 계열

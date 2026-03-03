@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
+import jwt  # PyJWT 패키지 (python-jose 아님)
 from fastapi import HTTPException, Request
 
 from app.config import settings
@@ -18,6 +18,7 @@ def create_access_token(ep_id: str) -> str:
         "sub": "Access-Token",
         "epid": ep_id,
         "iat": int(now.timestamp()),
+        # PyJWT 2.x는 exp에 datetime 객체를 그대로 받아 자동 변환
         "exp": now + timedelta(hours=TOKEN_EXPIRE_HOURS),
     }
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
@@ -26,9 +27,10 @@ def create_access_token(ep_id: str) -> str:
 def verify_token(token: str) -> dict:
     """JWT 토큰 검증 후 payload 반환"""
     try:
+        # PyJWT 2.x: 예외가 jwt.PyJWTError (python-jose의 JWTError와 다름)
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 

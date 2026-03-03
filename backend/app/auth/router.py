@@ -5,7 +5,8 @@
 - GET /api/auth/accessible-permissions: 접근 가능 권한 목록
 """
 
-from fastapi import APIRouter, Request, Form
+import jwt  # PyJWT 패키지
+from fastapi import APIRouter, HTTPException, Request, Form
 from fastapi.responses import RedirectResponse
 
 from app.config import settings
@@ -44,25 +45,44 @@ async def sso_login():
 async def acs_callback(id_token: str = Form(...)):
     """IdP 콜백 - id_token 수신, 검증 후 자체 JWT 발급
 
-    실제 운영 시: .cer 공개키로 id_token을 RS256 검증하여 userid 추출.
-    현재는 구조만 잡아두고, 실제 IdP 연동 시 검증 로직 추가 필요.
+    - Dummy 모드: id_token 검증 없이 즉시 임시 사용자로 JWT 발급
+    - 일반 모드: IDP_CERT_PATH의 .pem 인증서 공개키로 RS256 검증 후 userid 추출
     """
-    # TODO: 실제 운영 시 IdP 공개키로 id_token 검증
-    # cert_str = open(settings.IDP_CERT_PATH, 'rb').read()
-    # cert_obj = x509.load_pem_x509_certificate(cert_str, default_backend())
-    # public_key = cert_obj.public_key()
-    # decoded = jwt.decode(id_token, key=public_key, algorithms="RS256", ...)
-    # ep_id = decoded.get("userid") or decoded.get("sub")
+    if settings.DUMMY_MODE:
+        # Dummy 모드: 실제 IdP 없이 임시 사용자로 즉시 토큰 발급
+        token = create_access_token(ep_id="DUMMY_EP001")
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/auth?token={token}",
+            status_code=302,
+        )
 
-    # 현재: id_token에서 직접 디코딩 시도 (검증 생략)
-    ep_id = "UNKNOWN"
+    # 일반 모드: IdP 인증서(공개키)로 id_token RS256 검증
+    # PyJWT + cryptography 조합으로 X.509 인증서에서 공개키를 추출해 검증
     try:
-        from jose import jwt as jose_jwt
-        # 검증 없이 payload만 추출 (사내용이므로 허용)
-        unverified = jose_jwt.get_unverified_claims(id_token)
-        ep_id = unverified.get("userid", unverified.get("sub", "UNKNOWN"))
-    except Exception:
-        pass
+        from cryptography import x509
+        from cryptography.hazmat.backends import default_backend
+
+        # IDP_CERT_PATH에 지정된 .pem 인증서 파일에서 공개키 추출
+        cert_bytes = open(settings.IDP_CERT_PATH, "rb").read()
+        cert_obj = x509.load_pem_x509_certificate(cert_bytes, default_backend())
+        public_key = cert_obj.public_key()
+
+        # RS256 알고리즘으로 서명 검증 + 만료 검증 자동 수행
+        # audience: IdP가 발급한 토큰의 aud 클레임이 client_id와 일치해야 함
+        decoded = jwt.decode(
+            id_token,
+            public_key,
+            algorithms=["RS256"],
+            audience=settings.IDP_CLIENT_ID,
+        )
+        # IdP마다 사용자 식별자 클레임명이 다를 수 있음 (userid 또는 sub)
+        ep_id = decoded.get("userid") or decoded.get("sub") or "UNKNOWN"
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="IdP certificate file not found")
+    except jwt.PyJWTError as e:
+        # 서명 불일치, 만료, audience 불일치 등 모든 JWT 검증 실패
+        raise HTTPException(status_code=401, detail=f"Invalid id_token: {str(e)}")
 
     token = create_access_token(ep_id=ep_id)
     return RedirectResponse(

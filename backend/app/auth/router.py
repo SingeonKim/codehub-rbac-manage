@@ -6,6 +6,7 @@
 """
 
 import jwt  # PyJWT 패키지
+from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request, Form
 from fastapi.responses import RedirectResponse
 
@@ -46,7 +47,7 @@ async def acs_callback(id_token: str = Form(...)):
     """IdP 콜백 - id_token 수신, 검증 후 자체 JWT 발급
 
     - Dummy 모드: id_token 검증 없이 즉시 임시 사용자로 JWT 발급
-    - 일반 모드: IDP_CERT_PATH의 .pem 인증서 공개키로 RS256 검증 후 userid 추출
+    - 일반 모드: IDP_CERT_FILE_PATH/IDP_CERT_FILE_NAME 인증서 공개키로 RS256 검증 후 userid 추출
     """
     if settings.DUMMY_MODE:
         # Dummy 모드: 실제 IdP 없이 임시 사용자로 즉시 토큰 발급
@@ -62,8 +63,9 @@ async def acs_callback(id_token: str = Form(...)):
         from cryptography import x509
         from cryptography.hazmat.backends import default_backend
 
-        # IDP_CERT_PATH에 지정된 .pem 인증서 파일에서 공개키 추출
-        cert_bytes = open(settings.IDP_CERT_PATH, "rb").read()
+        # IDP_CERT_FILE_PATH + IDP_CERT_FILE_NAME 조합으로 인증서 파일 경로 생성
+        cert_path = Path(settings.IDP_CERT_FILE_PATH) / settings.IDP_CERT_FILE_NAME
+        cert_bytes = open(cert_path, "rb").read()
         cert_obj = x509.load_pem_x509_certificate(cert_bytes, default_backend())
         public_key = cert_obj.public_key()
 

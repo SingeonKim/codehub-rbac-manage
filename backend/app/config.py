@@ -1,4 +1,9 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# config.py 위치: backend/app/config.py
+# parent → backend/app/, parent.parent → backend/
+_BASE_DIR = Path(__file__).parent.parent
 
 
 class Settings(BaseSettings):
@@ -23,7 +28,10 @@ class Settings(BaseSettings):
     IDP_ENTITY_ID: str = ""
     IDP_CLIENT_ID: str = ""
     SP_REDIRECT_URL: str = ""
-    IDP_CERT_PATH: str = ""  # IdP 공개키 인증서 파일 경로 (.pem)
+    # 인증서 디렉토리 경로 (기본값: backend/resources/cert/)
+    IDP_CERT_FILE_PATH: str = str(_BASE_DIR / "resources" / "cert")
+    # 인증서 파일명 (운영 환경별로 파일명이 다를 경우 환경변수로 재정의)
+    IDP_CERT_FILE_NAME: str = "idp.pem"
 
     # 자체 발급 JWT 시크릿 키 (운영 시 32바이트 이상 랜덤 값으로 교체)
     JWT_SECRET_KEY: str = "dev-secret-key"

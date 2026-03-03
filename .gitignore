@@ -30,6 +30,10 @@ Thumbs.db
 dist/
 build/
 
+# IdP 인증서 파일 (민감 파일, git 추적 제외)
+backend/resources/cert/*.pem
+backend/resources/cert/*.cer
+
 # Misc
 *.log
 npm-debug.log*

@@ -32,7 +32,7 @@ CACHE_KEYS = {
 }
 
 # 각 엔티티 목록 정렬 허용 필드 (화이트리스트 — 임의 필드명 injection 방지)
-_USER_SORT_FIELDS = {"id", "full_name", "user_id", "department_name", "department_code", "update_time"}
+_USER_SORT_FIELDS = {"id", "full_name", "user_id", "department_name", "department_code", "create_time", "update_time"}
 _GROUP_SORT_FIELDS = {"id", "group_name", "create_time", "update_time"}
 _PERMISSION_SORT_FIELDS = {"id", "permission_name", "create_time", "update_time"}
 _MENU_SORT_FIELDS = {"id", "menu_name", "permission_code", "create_time", "update_time"}

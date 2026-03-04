@@ -30,6 +30,9 @@ CACHE_KEYS = {
     "menus": "cache:menus",
 }
 
+# 유저 목록 정렬 허용 필드 (화이트리스트 — 임의 필드명 injection 방지)
+_USER_SORT_FIELDS = {"id", "full_name", "user_id", "department_name", "department_code", "update_time"}
+
 TTL = {
     "users": settings.CACHE_TTL_USERS,
     "groups": settings.CACHE_TTL_DEFAULT,
@@ -71,6 +74,8 @@ async def list_users(
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
     group_filter: Optional[int] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query(None),
 ):
     token = get_token_from_request(request)
     all_items = await _get_all("users", token)
@@ -79,14 +84,24 @@ async def list_users(
     if group_filter is not None:
         all_items = [u for u in all_items if group_filter in (u.get("groups") or [])]
 
-    # 검색
+    # 검색: user_id/full_name 완전 일치, department_name 부분 일치, department_code 완전 일치
     if search:
         all_items = [
             u for u in all_items
             if u.get("user_id") == search
             or u.get("full_name") == search
             or search in (u.get("department_name") or "")
+            or u.get("department_code") == search
         ]
+
+    # 정렬: 허용된 필드만 사용, 기본값 id desc
+    effective_sort = sort_by if sort_by in _USER_SORT_FIELDS else "id"
+    reverse = (sort_order or "desc") != "asc"
+    all_items.sort(
+        key=lambda u: u.get(effective_sort, 0) if effective_sort == "id"
+                      else (u.get(effective_sort) or "").lower(),
+        reverse=reverse,
+    )
 
     return _paginate(all_items, page, page_size)
 

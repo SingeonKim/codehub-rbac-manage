@@ -195,6 +195,10 @@ function UserFormDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "유저 수정" : "유저 생성"}</DialogTitle>
         </DialogHeader>
+        {/* 안내 문구: 수정/생성 시 Knox 이용 권장 */}
+        <p className="text-xs text-muted-foreground">
+          * 유저 정보는 Knox에서 추가하기를 통해 생성/수정이 권장됩니다.
+        </p>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>사용자 ID *</Label>
@@ -356,6 +360,10 @@ function KnoxCreateDialog({
         <DialogHeader>
           <DialogTitle>Knox에서 추가하기</DialogTitle>
         </DialogHeader>
+        {/* 안내 문구: 기존 유저 upsert 동작 고지 */}
+        <p className="text-xs text-muted-foreground">
+          * Knox ID에 해당하는 유저가 이미 존재하는 경우, 정보가 업데이트(upsert)됩니다.
+        </p>
 
         <div className="space-y-4">
           <div className="space-y-1.5">

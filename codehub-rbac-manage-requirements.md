@@ -282,6 +282,7 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 | G-04 | 그룹 수정 | 기존 그룹 정보 수정 |
 | G-05 | 그룹 삭제 | 그룹 삭제 (확인 다이얼로그 포함) |
 | G-06 | 그룹-권한 관계 관리 | 그룹에 권한 추가/제거 |
+| G-07 | 그룹 목록 정렬 | 테이블 컬럼 헤더 클릭으로 정렬. 기본값: id desc. 정렬 가능 컬럼: id, 그룹명, 생성 시간, 수정 시간 |
 
 ### 4.4 권한 관리
 
@@ -305,6 +306,7 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 | P-04 | 권한 수정 | 기존 권한 정보 수정 |
 | P-05 | 권한 삭제 | 권한 삭제 (확인 다이얼로그 포함) |
 | P-06 | 권한-메뉴 관계 관리 | 권한에 메뉴 추가/제거 |
+| P-07 | 권한 목록 정렬 | 테이블 컬럼 헤더 클릭으로 정렬. 기본값: id desc. 정렬 가능 컬럼: id, 권한명, 생성 시간, 수정 시간 |
 
 ### 4.5 메뉴 관리
 
@@ -328,6 +330,7 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 | M-03 | 메뉴 생성 | 신규 메뉴 등록 폼 |
 | M-04 | 메뉴 수정 | 기존 메뉴 정보 수정 |
 | M-05 | 메뉴 삭제 | 메뉴 삭제 (확인 다이얼로그 포함) |
+| M-06 | 메뉴 목록 정렬 | 테이블 컬럼 헤더 클릭으로 정렬. 기본값: id desc. 정렬 가능 컬럼: id, 메뉴명, 권한 코드, 생성 시간, 수정 시간 |
 
 ---
 
@@ -402,21 +405,24 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 
 ### 5.6 그룹 관리 페이지 (`/groups`)
 
-- 유저 관리와 동일한 테이블 레이아웃
+테이블 컬럼: ID↕ | 그룹명↕ | 권한 수 | 생성 시간↕ | 수정 시간↕ | 액션
+- 권한 수는 계산값(배열 길이)이므로 정렬 불가, 나머지 컬럼은 헤더 클릭 정렬 지원
 - 그룹 상세/수정 화면에서 권한 추가/제거 관리
   - 현재 보유 권한 목록 표시
   - 권한 추가 드롭다운/검색으로 새 권한 추가
 
 ### 5.7 권한 관리 페이지 (`/permissions`)
 
-- 유저 관리와 동일한 테이블 레이아웃
+테이블 컬럼: ID↕ | 권한명↕ | 연결 메뉴 수 | 생성 시간↕ | 수정 시간↕ | 액션
+- 연결 메뉴 수는 계산값(배열 길이)이므로 정렬 불가, 나머지 컬럼은 헤더 클릭 정렬 지원
 - 권한 상세/수정 화면에서 메뉴 추가/제거 관리
   - 현재 연결 메뉴 목록 표시
   - 메뉴 추가 드롭다운/검색으로 새 메뉴 추가
 
 ### 5.8 메뉴 관리 페이지 (`/menus`)
 
-- 유저 관리와 동일한 테이블 레이아웃 (관계 관리 없음)
+테이블 컬럼: ID↕ | 메뉴명↕ | 권한 코드↕ | 생성 시간↕ | 수정 시간↕ | 액션
+- 모든 컬럼 헤더 클릭 정렬 지원 (관계 관리 없음)
 
 ### 5.9 공통 인터랙션 패턴
 
@@ -469,8 +475,8 @@ CUD 요청은 CodeHub BE로 전달하고, 성공 시 해당 엔티티의 캐시�
 | `page_size` | 페이지당 항목 수 | 20 |
 | `search` | 통합 검색어 (FastAPI에서 인메모리 필터링) | - |
 | `group_filter` | 그룹 ID로 유저 필터 (유저 API 전용) | - |
-| `sort_by` | 정렬 기준 컬럼 (유저 API 전용: id, full_name, user_id, department_name, department_code, update_time) | `id` |
-| `sort_order` | 정렬 방향 (유저 API 전용: `asc` / `desc`) | `desc` |
+| `sort_by` | 정렬 기준 컬럼 (엔티티별 허용 필드: 유저 — id/full_name/user_id/department_name/department_code/update_time, 그룹 — id/group_name/create_time/update_time, 권한 — id/permission_name/create_time/update_time, 메뉴 — id/menu_name/permission_code/create_time/update_time) | `id` |
+| `sort_order` | 정렬 방향: `asc` / `desc` (전체 List API 공통) | `desc` |
 
 기존 CodeHub BE의 Query Parameter(id, user_id 등 comma-separated 필터)도 그대로 지원하되, FastAPI 캐시 내에서 인메모리로 처리한다.
 

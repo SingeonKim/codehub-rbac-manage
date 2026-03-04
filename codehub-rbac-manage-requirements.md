@@ -521,9 +521,9 @@ CUD 요청은 CodeHub BE로 전달하고, 성공 시 해당 엔티티의 캐시�
 
 #### 유저 일괄 생성 API: `{CodehubBe}/api/v1/commons/user-etc/manual-create/`
 
-| 메서드 | 경로 | 설명 | 요청 본문 |
-|--------|------|------|----------|
-| POST | `/` | Knox ID로 유저 일괄 생성 | `{ "knox_ids": "abc.kim,test.abc" }` (comma-separated, 최대 100명) |
+| 메서드 | 경로 | 설명 | Query Parameter |
+|--------|------|------|----------------|
+| POST | `/?knox_id=abc.kim,test.abc` | Knox ID로 유저 일괄 생성 | `knox_id`: comma-separated Knox ID (최대 100명) |
 
 **응답 (200):**
 ```json

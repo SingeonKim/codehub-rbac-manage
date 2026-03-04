@@ -30,8 +30,11 @@ CACHE_KEYS = {
     "menus": "cache:menus",
 }
 
-# 유저 목록 정렬 허용 필드 (화이트리스트 — 임의 필드명 injection 방지)
+# 각 엔티티 목록 정렬 허용 필드 (화이트리스트 — 임의 필드명 injection 방지)
 _USER_SORT_FIELDS = {"id", "full_name", "user_id", "department_name", "department_code", "update_time"}
+_GROUP_SORT_FIELDS = {"id", "group_name", "create_time", "update_time"}
+_PERMISSION_SORT_FIELDS = {"id", "permission_name", "create_time", "update_time"}
+_MENU_SORT_FIELDS = {"id", "menu_name", "permission_code", "create_time", "update_time"}
 
 TTL = {
     "users": settings.CACHE_TTL_USERS,
@@ -145,11 +148,20 @@ async def list_groups(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query(None),
 ):
     token = get_token_from_request(request)
     all_items = await _get_all("groups", token)
     if search:
         all_items = [g for g in all_items if search.lower() in g.get("group_name", "").lower()]
+    effective_sort = sort_by if sort_by in _GROUP_SORT_FIELDS else "id"
+    reverse = (sort_order or "desc") != "asc"
+    all_items.sort(
+        key=lambda g: g.get(effective_sort, 0) if effective_sort == "id"
+                      else (g.get(effective_sort) or "").lower(),
+        reverse=reverse,
+    )
     return _paginate(all_items, page, page_size)
 
 
@@ -192,11 +204,20 @@ async def list_permissions(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query(None),
 ):
     token = get_token_from_request(request)
     all_items = await _get_all("permissions", token)
     if search:
         all_items = [p for p in all_items if search.lower() in p.get("permission_name", "").lower()]
+    effective_sort = sort_by if sort_by in _PERMISSION_SORT_FIELDS else "id"
+    reverse = (sort_order or "desc") != "asc"
+    all_items.sort(
+        key=lambda p: p.get(effective_sort, 0) if effective_sort == "id"
+                      else (p.get(effective_sort) or "").lower(),
+        reverse=reverse,
+    )
     return _paginate(all_items, page, page_size)
 
 
@@ -239,6 +260,8 @@ async def list_menus(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query(None),
 ):
     token = get_token_from_request(request)
     all_items = await _get_all("menus", token)
@@ -248,6 +271,13 @@ async def list_menus(
             m for m in all_items
             if s in m.get("menu_name", "").lower() or s in m.get("permission_code", "").lower()
         ]
+    effective_sort = sort_by if sort_by in _MENU_SORT_FIELDS else "id"
+    reverse = (sort_order or "desc") != "asc"
+    all_items.sort(
+        key=lambda m: m.get(effective_sort, 0) if effective_sort == "id"
+                      else (m.get(effective_sort) or "").lower(),
+        reverse=reverse,
+    )
     return _paginate(all_items, page, page_size)
 
 

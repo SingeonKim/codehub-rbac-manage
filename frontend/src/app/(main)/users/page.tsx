@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +48,54 @@ const PAGE_SIZE = 20;
 // defaultUser 그룹처럼 전체 유저를 포함하는 그룹명 목록
 // 그룹 필터 드롭다운에서 제외한다
 const EXCLUDED_GROUP_NAMES = ["defaultUser"];
+
+// 정렬 대상 컬럼 타입 (백엔드 _USER_SORT_FIELDS와 동일)
+type SortField =
+  | "id"
+  | "full_name"
+  | "user_id"
+  | "department_name"
+  | "department_code"
+  | "update_time";
+type SortOrder = "asc" | "desc";
+
+// 정렬 가능한 컬럼 헤더 컴포넌트
+// 클릭 시 asc/desc 전환, 활성 컬럼에는 방향 화살표, 비활성은 흐릿한 양방향 화살표
+function SortableHeader({
+  field,
+  label,
+  current,
+  order,
+  onSort,
+}: {
+  field: SortField;
+  label: string;
+  current: SortField;
+  order: SortOrder;
+  onSort: (f: SortField) => void;
+}) {
+  const isActive = current === field;
+  return (
+    <th
+      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-foreground"
+      onClick={() => onSort(field)}
+    >
+      {/* flex items-center → display:flex + 수직 가운데 정렬 */}
+      <span className="flex items-center gap-1">
+        {label}
+        {isActive ? (
+          order === "asc" ? (
+            <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )
+        ) : (
+          <ChevronsUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </span>
+    </th>
+  );
+}
 
 function UserFormDialog({
   open,
@@ -223,6 +279,10 @@ export default function UsersPage() {
   const [searchInput, setSearchInput] = useState("");
   const [groupFilter, setGroupFilter] = useState<string>("all");
 
+  // 정렬 상태: 기본값 id 내림차순
+  const [sortBy, setSortBy] = useState<SortField>("id");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
   // 그룹 목록 (필터 드롭다운 + 폼용)
   const [allGroups, setAllGroups] = useState<Group[]>([]);
   // 필터 드롭다운: defaultUser 제외
@@ -263,6 +323,8 @@ export default function UsersPage() {
     const params = new URLSearchParams({
       page: String(page),
       page_size: String(PAGE_SIZE),
+      sort_by: sortBy,
+      sort_order: sortOrder,
       ...(search ? { search } : {}),
       ...(groupFilter !== "all" ? { group_filter: groupFilter } : {}),
     });
@@ -270,7 +332,7 @@ export default function UsersPage() {
       `/v1/users?${params.toString()}`
     );
     setData(res);
-  }, [page, search, groupFilter]);
+  }, [page, search, groupFilter, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchData();
@@ -283,6 +345,18 @@ export default function UsersPage() {
 
   const handleGroupFilter = (value: string) => {
     setGroupFilter(value);
+    setPage(1);
+  };
+
+  // 컬럼 헤더 클릭 시 정렬 전환
+  // 같은 컬럼: asc ↔ desc 토글 / 다른 컬럼: 해당 컬럼 desc로 새로 정렬
+  const handleSort = (field: SortField) => {
+    if (sortBy === field) {
+      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortOrder("desc");
+    }
     setPage(1);
   };
 
@@ -308,6 +382,10 @@ export default function UsersPage() {
       .filter((name): name is string => !!name && !EXCLUDED_GROUP_NAMES.includes(name));
   };
 
+  // ISO 날짜 문자열을 한국어 날짜 형식으로 변환 (예: 2026. 3. 4.)
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("ko-KR");
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -331,7 +409,7 @@ export default function UsersPage() {
       {/* 검색 + 그룹 필터 */}
       <div className="flex gap-2">
         <Input
-          placeholder="이름, 사용자 ID, 부서명 검색"
+          placeholder="이름, 사용자 ID, 부서명, 부서 코드 검색"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -359,11 +437,12 @@ export default function UsersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-gray-50 text-left text-muted-foreground">
-              <th className="w-16 px-4 py-3 font-medium">ID</th>
-              <th className="px-4 py-3 font-medium">이름</th>
-              <th className="px-4 py-3 font-medium">사용자 ID</th>
-              <th className="px-4 py-3 font-medium">부서</th>
-              <th className="px-4 py-3 font-medium">직급</th>
+              <SortableHeader field="id" label="ID" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="full_name" label="이름" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="user_id" label="사용자 ID" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="department_name" label="부서" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="department_code" label="부서 코드" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="update_time" label="수정 시간" current={sortBy} order={sortOrder} onSort={handleSort} />
               <th className="px-4 py-3 font-medium">그룹</th>
               <th className="w-24 px-4 py-3 font-medium text-right">액션</th>
             </tr>
@@ -371,13 +450,13 @@ export default function UsersPage() {
           <tbody>
             {!data ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                   로딩 중...
                 </td>
               </tr>
             ) : data.items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -393,7 +472,10 @@ export default function UsersPage() {
                       {user.department_name || "-"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {user.grade_name || "-"}
+                      {user.department_code || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {formatDate(user.update_time)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">

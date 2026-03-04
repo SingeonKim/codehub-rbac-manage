@@ -18,6 +18,7 @@ router = APIRouter(prefix="/api/v1")
 # CodeHub BE API 경로
 BE_PATHS = {
     "users": "/api/v1/commons/user/",
+    "manual_create": "/api/v1/commons/user-etc/manual-create/",
     "groups": "/api/v1/commons/group/",
     "permissions": "/api/v1/commons/permission/",
     "menus": "/api/v1/commons/menu/",
@@ -121,6 +122,18 @@ async def create_user(request: Request):
     body = await request.json()
     result = await client.proxy_request("POST", BE_PATHS["users"], token, body)
     cache.invalidate(CACHE_KEYS["users"])
+    return result
+
+
+@router.post("/users/manual-create")
+async def manual_create_users(request: Request):
+    """Knox ID 일괄 생성 — CodeHub BE로 프록시 후 성공 유저가 있으면 캐시 무효화"""
+    token = get_token_from_request(request)
+    body = await request.json()
+    result = await client.proxy_request("POST", BE_PATHS["manual_create"], token, body)
+    # 성공 유저가 있으면 유저 캐시 무효화 (목록 새로고침 시 최신 데이터 반영)
+    if result and result.get("count_is_success", 0) > 0:
+        cache.invalidate(CACHE_KEYS["users"])
     return result
 
 

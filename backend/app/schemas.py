@@ -121,6 +121,23 @@ class MenuResponse(MenuBase):
     update_time: Optional[str] = None
 
 
+# --- Knox 일괄 생성 ---
+
+class ManualCreateRequest(BaseModel):
+    """Knox ID를 쉼표로 구분하여 일괄 생성 요청"""
+    knox_ids: str  # comma-separated Knox ID (최대 100명)
+
+
+class ManualCreateResponse(BaseModel):
+    """Knox 일괄 생성 결과"""
+    count_is_success: int
+    count_is_not_found: int
+    count_is_internal_server_error: int
+    success_user_ids: list[str]
+    not_found_user_ids: list[str]
+    internal_server_error_user_ids: list[str]
+
+
 # --- 인증 ---
 
 class AccessiblePermission(BaseModel):

@@ -60,10 +60,6 @@ export interface UserUpdate {
 
 // --- Knox 일괄 생성 ---
 
-export interface ManualCreateRequest {
-  knox_ids: string; // comma-separated Knox ID (최대 100명)
-}
-
 export interface ManualCreateResponse {
   count_is_success: number;
   count_is_not_found: number;

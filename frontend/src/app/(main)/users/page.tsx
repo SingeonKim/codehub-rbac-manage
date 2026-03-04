@@ -331,10 +331,11 @@ function KnoxCreateDialog({
 
     setLoading(true);
     try {
-      // manual-create API 호출 — knox_ids는 쉼표로 구분된 문자열로 전송
+      // manual-create API 호출 — knox_id를 query parameter로 전송
+      // encodeURIComponent: 쉼표나 특수문자가 URL에 안전하게 포함되도록 인코딩
       const res = await api.post<ManualCreateResponse>(
-        "/v1/users/manual-create",
-        { knox_ids: ids.join(",") }
+        `/v1/users/manual-create?knox_id=${encodeURIComponent(ids.join(","))}`,
+        {}
       );
       setResult(res);
 

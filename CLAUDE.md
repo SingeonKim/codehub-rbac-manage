@@ -123,6 +123,30 @@ else:
 - `.env` 파일 자동 로드 + 타입 변환 + 서버 시작 시 ValidationError
 - 우선순위: OS 환경변수 > `.env` 파일 > 클래스 기본값
 
+## 커밋 전략
+
+하나의 요청이라도 변경 레이어가 다르면 레이어별로 커밋을 분리한다.
+
+### 커밋 단위 기준
+
+| 레이어 | 해당 파일 | 커밋 prefix 예시 |
+|--------|-----------|-----------------|
+| 스펙 문서 | `codehub-rbac-model-api-spec.md`, `codehub-rbac-manage-requirements.md`, `CLAUDE.md` | `docs:` |
+| 백엔드 | `backend/app/**` (schemas, router, config, auth 등) | `feat(backend):` / `fix(backend):` |
+| Mock 데이터 | `backend/app/mock/` | `fix(mock):` / `feat(mock):` — 백엔드 로직 변경과 내용이 다르면 분리 |
+| 프론트엔드 | `frontend/src/**` | `feat(frontend):` / `fix(frontend):` |
+
+### 분리 예시
+
+방금 작업 "Django 모델 기반 null/blank 처리 수정"은 다음 3개로 분리하는 것이 적절:
+1. `docs: update model spec with null/blank field constraints` → 스펙 문서 2개
+2. `fix(backend): align UserBase schema and mock data with Django model` → schemas.py + mock/data.py
+3. `fix(frontend): handle nullable fields in user form and update types` → types.ts + users/page.tsx
+
+### 같은 커밋으로 묶어도 되는 경우
+- 동일 레이어 내 밀접하게 연관된 변경 (e.g., schema 변경 + 그에 따른 mock 데이터 수정)
+- 2~3줄 이하의 아주 작은 보조 변경이 다른 레이어에 있을 때
+
 ## 디자인 가이드
 
 - Primary: `#0d6154`, Secondary: `#46cf94`, 배경: 흰색 계열

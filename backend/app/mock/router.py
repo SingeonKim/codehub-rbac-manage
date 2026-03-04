@@ -19,8 +19,11 @@ from app.mock.data import USERS, GROUPS, PERMISSIONS, MENUS, NEXT_IDS
 
 router = APIRouter(prefix="/api/v1")
 
-# 유저 목록 정렬 허용 필드 (화이트리스트 — 임의 필드명 injection 방지)
+# 각 엔티티 목록 정렬 허용 필드 (화이트리스트 — 임의 필드명 injection 방지)
 _USER_SORT_FIELDS = {"id", "full_name", "user_id", "department_name", "department_code", "update_time"}
+_GROUP_SORT_FIELDS = {"id", "group_name", "create_time", "update_time"}
+_PERMISSION_SORT_FIELDS = {"id", "permission_name", "create_time", "update_time"}
+_MENU_SORT_FIELDS = {"id", "menu_name", "permission_code", "create_time", "update_time"}
 
 
 # --- 페이지네이션/검색 헬퍼 ---
@@ -131,10 +134,19 @@ async def list_groups(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query(None),
 ):
     filtered = GROUPS[:]
     if search:
         filtered = [g for g in filtered if search.lower() in g["group_name"].lower()]
+    effective_sort = sort_by if sort_by in _GROUP_SORT_FIELDS else "id"
+    reverse = (sort_order or "desc") != "asc"
+    filtered.sort(
+        key=lambda g: g.get(effective_sort, 0) if effective_sort == "id"
+                      else (g.get(effective_sort) or "").lower(),
+        reverse=reverse,
+    )
     return _paginate(filtered, page, page_size)
 
 
@@ -186,10 +198,19 @@ async def list_permissions(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query(None),
 ):
     filtered = PERMISSIONS[:]
     if search:
         filtered = [p for p in filtered if search.lower() in p["permission_name"].lower()]
+    effective_sort = sort_by if sort_by in _PERMISSION_SORT_FIELDS else "id"
+    reverse = (sort_order or "desc") != "asc"
+    filtered.sort(
+        key=lambda p: p.get(effective_sort, 0) if effective_sort == "id"
+                      else (p.get(effective_sort) or "").lower(),
+        reverse=reverse,
+    )
     return _paginate(filtered, page, page_size)
 
 
@@ -241,6 +262,8 @@ async def list_menus(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: Optional[str] = Query(None),
 ):
     filtered = MENUS[:]
     if search:
@@ -250,6 +273,13 @@ async def list_menus(
             if search_lower in m["menu_name"].lower()
             or search_lower in m["permission_code"].lower()
         ]
+    effective_sort = sort_by if sort_by in _MENU_SORT_FIELDS else "id"
+    reverse = (sort_order or "desc") != "asc"
+    filtered.sort(
+        key=lambda m: m.get(effective_sort, 0) if effective_sort == "id"
+                      else (m.get(effective_sort) or "").lower(),
+        reverse=reverse,
+    )
     return _paginate(filtered, page, page_size)
 
 
@@ -266,6 +296,8 @@ async def create_menu(data: MenuCreate):
     new_menu = {
         "id": NEXT_IDS["menus"],
         **data.model_dump(),
+        "create_time": _now_iso(),
+        "update_time": _now_iso(),
     }
     NEXT_IDS["menus"] += 1
     MENUS.append(new_menu)
@@ -278,6 +310,7 @@ async def update_menu(menu_id: int, data: MenuUpdate):
         if menu["id"] == menu_id:
             update_data = data.model_dump(exclude_unset=True)
             menu.update(update_data)
+            menu["update_time"] = _now_iso()
             return menu
     raise HTTPException(status_code=404, detail="Menu not found")
 

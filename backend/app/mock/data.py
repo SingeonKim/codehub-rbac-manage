@@ -6,16 +6,16 @@ _now = datetime.now(timezone.utc).isoformat()
 
 # --- 메뉴 ---
 MENUS: list[dict] = [
-    {"id": 1, "menu_name": "홈페이지", "permission_code": "PortalHome"},
-    {"id": 2, "menu_name": "대시보드", "permission_code": "Dashboard"},
-    {"id": 3, "menu_name": "프로젝트 관리", "permission_code": "ProjectManage"},
-    {"id": 4, "menu_name": "코드 리뷰", "permission_code": "CodeReview"},
-    {"id": 5, "menu_name": "CI/CD 파이프라인", "permission_code": "CiCdPipeline"},
-    {"id": 6, "menu_name": "모니터링", "permission_code": "Monitoring"},
-    {"id": 7, "menu_name": "설정", "permission_code": "Settings"},
-    {"id": 8, "menu_name": "사용자 관리", "permission_code": "UserManage"},
-    {"id": 9, "menu_name": "RBAC 관리", "permission_code": "CodeHubRbacManage"},
-    {"id": 10, "menu_name": "API 문서", "permission_code": "ApiDocs"},
+    {"id": 1, "menu_name": "홈페이지", "permission_code": "PortalHome", "create_time": _now, "update_time": _now},
+    {"id": 2, "menu_name": "대시보드", "permission_code": "Dashboard", "create_time": _now, "update_time": _now},
+    {"id": 3, "menu_name": "프로젝트 관리", "permission_code": "ProjectManage", "create_time": _now, "update_time": _now},
+    {"id": 4, "menu_name": "코드 리뷰", "permission_code": "CodeReview", "create_time": _now, "update_time": _now},
+    {"id": 5, "menu_name": "CI/CD 파이프라인", "permission_code": "CiCdPipeline", "create_time": _now, "update_time": _now},
+    {"id": 6, "menu_name": "모니터링", "permission_code": "Monitoring", "create_time": _now, "update_time": _now},
+    {"id": 7, "menu_name": "설정", "permission_code": "Settings", "create_time": _now, "update_time": _now},
+    {"id": 8, "menu_name": "사용자 관리", "permission_code": "UserManage", "create_time": _now, "update_time": _now},
+    {"id": 9, "menu_name": "RBAC 관리", "permission_code": "CodeHubRbacManage", "create_time": _now, "update_time": _now},
+    {"id": 10, "menu_name": "API 문서", "permission_code": "ApiDocs", "create_time": _now, "update_time": _now},
 ]
 
 # --- 권한 ---

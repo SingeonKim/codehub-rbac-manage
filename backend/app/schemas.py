@@ -117,6 +117,8 @@ class MenuUpdate(BaseModel):
 
 class MenuResponse(MenuBase):
     id: int
+    create_time: Optional[str] = None
+    update_time: Optional[str] = None
 
 
 # --- 인증 ---

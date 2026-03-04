@@ -9,9 +9,10 @@ CodeHub 서비스의 RBAC(유저/그룹/권한/메뉴)를 관리하는 사내용
 
 ## 기술 스택
 
-- **Frontend**: Next.js 15 (App Router) + TypeScript + Tailwind CSS v4 (설정 파일 없음) + shadcn/ui + lucide-react
+- **Frontend**: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS v4 (CSS 기반 설정, tailwind.config 없음) + shadcn/ui + lucide-react + sonner (토스트)
 - **Backend**: FastAPI (Python) + PyJWT + pydantic-settings + httpx
 - **인증**: OIDC 기반 사내 SSO → FastAPI에서 자체 JWT 발급 (HS256, 12시간 만료)
+- **Lint**: ESLint 9 (Flat Config, `frontend/eslint.config.mjs`)
 
 ## 아키텍처
 
@@ -146,6 +147,34 @@ else:
 ### 같은 커밋으로 묶어도 되는 경우
 - 동일 레이어 내 밀접하게 연관된 변경 (e.g., schema 변경 + 그에 따른 mock 데이터 수정)
 - 2~3줄 이하의 아주 작은 보조 변경이 다른 레이어에 있을 때
+
+## 코드 패턴 주의사항
+
+### Nullable 필드 처리 (Django ↔ FastAPI ↔ TypeScript)
+
+Django `CharField(null=True, blank 미지정)`는 `null`은 허용하지만 `""`는 거부한다.
+세 레이어에서 일관되게 처리해야 한다:
+
+- **TypeScript**: `string | null` 타입으로 선언, 폼의 빈 입력(`""`)을 `null`로 변환 후 전송
+- **Pydantic**: `Optional[str] = None`으로 선언
+- **프론트엔드 변환 코드**: `users/page.tsx`의 `handleSubmit`에서 nullableFields 배열로 `"" → null` 일괄 변환
+
+### 정렬 기능 화이트리스트
+
+정렬 가능 컬럼은 백엔드와 프론트엔드 양쪽에서 화이트리스트로 관리한다.
+새 정렬 컬럼 추가 시 양쪽 모두 수정 필요:
+
+- **백엔드**: `mock/router.py`의 `_*_SORT_FIELDS` set + `proxy/router.py`의 `SORTABLE_FIELDS`
+- **프론트엔드**: 각 페이지의 `SortField` 타입 + `SortableHeader` 컴포넌트
+
+### 새 엔드포인트 추가 시 체크리스트
+
+1. `backend/app/schemas.py` — Request/Response Pydantic 모델
+2. `backend/app/proxy/router.py` — Proxy 엔드포인트 + `BE_PATHS` 추가 + 캐시 무효화
+3. `backend/app/mock/router.py` — Mock 엔드포인트 (동일 경로, 동일 응답 형식)
+4. `frontend/src/lib/types.ts` — TypeScript 타입
+5. `frontend/src/app/(main)/` — 해당 페이지에서 API 호출
+6. `codehub-rbac-manage-requirements.md` — 스펙 문서 반영
 
 ## 디자인 가이드
 

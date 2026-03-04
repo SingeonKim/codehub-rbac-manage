@@ -58,6 +58,21 @@ export interface UserUpdate {
   groups?: number[];
 }
 
+// --- Knox 일괄 생성 ---
+
+export interface ManualCreateRequest {
+  knox_ids: string; // comma-separated Knox ID (최대 100명)
+}
+
+export interface ManualCreateResponse {
+  count_is_success: number;
+  count_is_not_found: number;
+  count_is_internal_server_error: number;
+  success_user_ids: string[];
+  not_found_user_ids: string[];
+  internal_server_error_user_ids: string[];
+}
+
 // --- 그룹 ---
 
 export interface Group {

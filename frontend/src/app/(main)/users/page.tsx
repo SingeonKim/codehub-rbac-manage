@@ -9,6 +9,9 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  ChevronDownIcon,
+  UserPlus,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,7 +24,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -42,6 +52,7 @@ import type {
   UserUpdate,
   Group,
   PaginatedResponse,
+  ManualCreateResponse,
 } from "@/lib/types";
 
 const PAGE_SIZE = 20;
@@ -272,6 +283,159 @@ function UserFormDialog({
   );
 }
 
+/**
+ * KnoxCreateDialog — Knox ID를 쉼표로 구분 입력하여 유저를 일괄 생성하는 다이얼로그
+ *
+ * 기존 UserFormDialog가 한 명씩 모든 필드를 입력하는 방식이라면,
+ * 이 다이얼로그는 CodeHub BE의 manual-create API를 활용해 Knox ID만으로 일괄 생성한다.
+ * API가 Knox에서 유저 정보를 자동으로 조회하여 등록해주므로 추가 필드 입력이 불필요하다.
+ */
+function KnoxCreateDialog({
+  open,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [knoxIds, setKnoxIds] = useState("");
+  const [loading, setLoading] = useState(false);
+  // result: API 응답 결과를 저장하여 다이얼로그 내에 표시
+  const [result, setResult] = useState<ManualCreateResponse | null>(null);
+
+  // 다이얼로그가 열릴 때마다 입력과 결과를 초기화
+  // useEffect: open 값이 변경될 때 실행 (Django에는 없는 React 고유 패턴)
+  useEffect(() => {
+    if (open) {
+      setKnoxIds("");
+      setResult(null);
+    }
+  }, [open]);
+
+  const handleSubmit = async () => {
+    // 입력값 파싱: 쉼표로 분리 후 공백 제거, 빈 문자열 제외
+    const ids = knoxIds
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    if (ids.length === 0) {
+      toast.error("Knox ID를 입력하세요.");
+      return;
+    }
+    if (ids.length > 100) {
+      toast.error("최대 100명까지 입력할 수 있습니다.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // manual-create API 호출 — knox_ids는 쉼표로 구분된 문자열로 전송
+      const res = await api.post<ManualCreateResponse>(
+        "/v1/users/manual-create",
+        { knox_ids: ids.join(",") }
+      );
+      setResult(res);
+
+      // 성공 유저가 있으면 목록 새로고침
+      if (res.count_is_success > 0) {
+        onSaved();
+      }
+    } catch (e) {
+      toast.error((e as Error).message || "처리 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Knox에서 추가하기</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Knox ID (쉼표로 구분, 최대 100명)</Label>
+            {/* Textarea: 여러 줄 입력 가능한 텍스트 영역 (HTML <textarea> 래퍼) */}
+            <Textarea
+              value={knoxIds}
+              onChange={(e) => setKnoxIds(e.target.value)}
+              placeholder="예: abc.kim, test.abc, hong.gd"
+              rows={4}
+              disabled={loading}
+            />
+          </div>
+
+          {/* 결과 표시 영역 — API 호출 후에만 렌더링 */}
+          {result && (
+            <div className="rounded-md border p-4 space-y-2 text-sm">
+              {/* 성공 결과 */}
+              {result.count_is_success > 0 && (
+                <div className="space-y-1">
+                  {/* text-emerald-700 → 녹색 계열 텍스트 */}
+                  <p className="font-medium text-emerald-700">
+                    성공: {result.count_is_success}명
+                  </p>
+                  <p className="text-muted-foreground">
+                    {result.success_user_ids.join(", ")}
+                  </p>
+                </div>
+              )}
+
+              {/* 미발견 결과 */}
+              {result.count_is_not_found > 0 && (
+                <div className="space-y-1">
+                  <p className="font-medium text-orange-600">
+                    미발견: {result.count_is_not_found}명
+                  </p>
+                  <p className="text-muted-foreground">
+                    {result.not_found_user_ids.join(", ")}
+                  </p>
+                </div>
+              )}
+
+              {/* 서버 에러 결과 */}
+              {result.count_is_internal_server_error > 0 && (
+                <div className="space-y-1">
+                  <p className="font-medium text-destructive">
+                    서버 에러: {result.count_is_internal_server_error}명
+                  </p>
+                  <p className="text-muted-foreground">
+                    {result.internal_server_error_user_ids.join(", ")}
+                  </p>
+                </div>
+              )}
+
+              {/* 모두 성공한 경우 */}
+              {result.count_is_not_found === 0 &&
+                result.count_is_internal_server_error === 0 && (
+                  <p className="text-emerald-700">
+                    모든 유저가 성공적으로 추가되었습니다.
+                  </p>
+                )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={loading}>
+            {result ? "닫기" : "취소"}
+          </Button>
+          {/* 결과가 있으면 추가하기 버튼 숨김 (이미 처리 완료) */}
+          {!result && (
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? "추가 중..." : "추가하기"}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function UsersPage() {
   const [data, setData] = useState<PaginatedResponse<User> | null>(null);
   const [page, setPage] = useState(1);
@@ -291,6 +455,7 @@ export default function UsersPage() {
   const [groupOptions, setGroupOptions] = useState<RelationOption[]>([]);
 
   const [formOpen, setFormOpen] = useState(false);
+  const [knoxOpen, setKnoxOpen] = useState(false); // Knox 일괄 생성 다이얼로그
   const [editTarget, setEditTarget] = useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -395,15 +560,32 @@ export default function UsersPage() {
             CodeHub 서비스의 유저를 관리합니다.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditTarget(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          유저 생성
-        </Button>
+        {/* DropdownMenu: shadcn/ui가 제공하는 드롭다운 메뉴 컴포넌트.
+            Django에서 하나의 URL에 하나의 뷰를 매핑하듯, 여기서는 하나의 버튼에 여러 액션을 매핑한다. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              유저 생성
+              <ChevronDownIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                setEditTarget(null);
+                setFormOpen(true);
+              }}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              직접 입력하여 생성
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setKnoxOpen(true)}>
+              <Download className="mr-2 h-4 w-4" />
+              Knox에서 추가하기
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* 검색 + 그룹 필터 */}
@@ -536,6 +718,12 @@ export default function UsersPage() {
         user={editTarget}
         groupOptions={groupOptions}
         onClose={() => setFormOpen(false)}
+        onSaved={fetchData}
+      />
+
+      <KnoxCreateDialog
+        open={knoxOpen}
+        onClose={() => setKnoxOpen(false)}
         onSaved={fetchData}
       />
 

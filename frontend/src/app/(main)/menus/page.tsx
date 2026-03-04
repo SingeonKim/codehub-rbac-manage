@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +28,48 @@ import { api } from "@/lib/api";
 import type { Menu, MenuCreate, MenuUpdate, PaginatedResponse } from "@/lib/types";
 
 const PAGE_SIZE = 20;
+
+// 정렬 대상 컬럼 타입 (백엔드 _MENU_SORT_FIELDS와 동일)
+type SortField = "id" | "menu_name" | "permission_code" | "create_time" | "update_time";
+type SortOrder = "asc" | "desc";
+
+// 정렬 가능한 컬럼 헤더 컴포넌트
+// 클릭 시 asc/desc 전환, 활성 컬럼에는 방향 화살표, 비활성은 흐릿한 양방향 화살표
+function SortableHeader({
+  field,
+  label,
+  current,
+  order,
+  onSort,
+}: {
+  field: SortField;
+  label: string;
+  current: SortField;
+  order: SortOrder;
+  onSort: (f: SortField) => void;
+}) {
+  const isActive = current === field;
+  return (
+    <th
+      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-foreground"
+      onClick={() => onSort(field)}
+    >
+      {/* flex items-center → display:flex + 수직 가운데 정렬 */}
+      <span className="flex items-center gap-1">
+        {label}
+        {isActive ? (
+          order === "asc" ? (
+            <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )
+        ) : (
+          <ChevronsUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </span>
+    </th>
+  );
+}
 
 // 메뉴 생성/수정 폼 다이얼로그
 function MenuFormDialog({
@@ -117,9 +167,12 @@ export default function MenusPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
+  // 정렬 상태: 기본값 id 내림차순
+  const [sortBy, setSortBy] = useState<SortField>("id");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Menu | null>(null);
-
   const [deleteTarget, setDeleteTarget] = useState<Menu | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -127,13 +180,15 @@ export default function MenusPage() {
     const params = new URLSearchParams({
       page: String(page),
       page_size: String(PAGE_SIZE),
+      sort_by: sortBy,
+      sort_order: sortOrder,
       ...(search ? { search } : {}),
     });
     const res = await api.get<PaginatedResponse<Menu>>(
       `/v1/menus?${params.toString()}`
     );
     setData(res);
-  }, [page, search]);
+  }, [page, search, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchData();
@@ -142,6 +197,18 @@ export default function MenusPage() {
   const handleSearch = () => {
     setPage(1);
     setSearch(searchInput);
+  };
+
+  // 컬럼 헤더 클릭 시 정렬 전환
+  // 같은 컬럼: asc ↔ desc 토글 / 다른 컬럼: 해당 컬럼 desc로 새로 정렬
+  const handleSort = (field: SortField) => {
+    if (sortBy === field) {
+      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortOrder("desc");
+    }
+    setPage(1);
   };
 
   const handleDelete = async () => {
@@ -158,6 +225,10 @@ export default function MenusPage() {
       setDeleteLoading(false);
     }
   };
+
+  // ISO 날짜 문자열을 한국어 날짜 형식으로 변환 (예: 2026. 3. 4.)
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("ko-KR");
 
   return (
     <div className="space-y-4">
@@ -199,28 +270,24 @@ export default function MenusPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-gray-50 text-left text-muted-foreground">
-              <th className="w-16 px-4 py-3 font-medium">ID</th>
-              <th className="px-4 py-3 font-medium">메뉴명</th>
-              <th className="px-4 py-3 font-medium">권한 코드</th>
+              <SortableHeader field="id" label="ID" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="menu_name" label="메뉴명" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="permission_code" label="권한 코드" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="create_time" label="생성 시간" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="update_time" label="수정 시간" current={sortBy} order={sortOrder} onSort={handleSort} />
               <th className="w-24 px-4 py-3 font-medium text-right">액션</th>
             </tr>
           </thead>
           <tbody>
             {!data ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-muted-foreground"
-                >
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                   로딩 중...
                 </td>
               </tr>
             ) : data.items.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-muted-foreground"
-                >
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -234,6 +301,12 @@ export default function MenusPage() {
                   <td className="px-4 py-3 font-medium">{menu.menu_name}</td>
                   <td className="px-4 py-3">
                     <Badge variant="outline">{menu.permission_code}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(menu.create_time)}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(menu.update_time)}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">

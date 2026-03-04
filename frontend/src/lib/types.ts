@@ -104,6 +104,8 @@ export interface Menu {
   id: number;
   menu_name: string;
   permission_code: string;
+  create_time: string;
+  update_time: string;
 }
 
 export interface MenuCreate {

@@ -108,8 +108,9 @@ async def accessible_permissions(request: Request):
         ]
 
     # 일반 모드: CodeHub BE에 권한 조회 요청 전달
+    # proxy/client.py와 동일하게 verify 설정 적용 (로컬 mkcert 환경 대응)
     import httpx
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=settings.CODEHUB_BE_VERIFY_SSL) as client:
         response = await client.get(
             f"{settings.CODEHUB_BE_URL}/api/v1/auths/accessible-permission-info/",
             headers={"Authorization": f"Bearer {token}"},

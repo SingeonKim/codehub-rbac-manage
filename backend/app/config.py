@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     # Next.js 프론트엔드 URL (CORS 허용 대상 + 리다이렉트 대상)
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # CodeHub BE TLS 검증 설정
+    # 운영: True(기본값)
+    # 로컬 HTTPS(mkcert 자체 서명 인증서): False
+    # → Python httpx는 Windows 시스템 CA 저장소를 사용하지 않아 mkcert CA를 인식 못 함
+    CODEHUB_BE_VERIFY_SSL: bool = True
+
     # 캐시 TTL (초 단위)
     CACHE_TTL_USERS: int = 300    # 유저 목록: 5분
     CACHE_TTL_DEFAULT: int = 600  # 그 외(그룹/권한/메뉴): 10분

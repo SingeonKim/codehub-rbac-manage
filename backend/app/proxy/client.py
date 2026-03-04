@@ -12,7 +12,8 @@ from app.config import settings
 async def fetch_all(path: str, token: str) -> list:
     """CodeHub BE List API 전체 조회 (페이지네이션 없음)"""
     url = f"{settings.CODEHUB_BE_URL}{path}"
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    # verify=False: 로컬 mkcert 인증서 환경에서 CODEHUB_BE_VERIFY_SSL=false 설정 시 검증 건너뜀
+    async with httpx.AsyncClient(timeout=30.0, verify=settings.CODEHUB_BE_VERIFY_SSL) as client:
         response = await client.get(
             url,
             headers={"Authorization": f"Bearer {token}"},
@@ -37,7 +38,7 @@ async def proxy_request(
 ) -> dict | None:
     """CodeHub BE로 단건 요청을 프록시 (Detail, Create, Update, Delete)"""
     url = f"{settings.CODEHUB_BE_URL}{path}"
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=15.0, verify=settings.CODEHUB_BE_VERIFY_SSL) as client:
         response = await client.request(
             method=method,
             url=url,

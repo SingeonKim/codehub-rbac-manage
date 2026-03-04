@@ -40,14 +40,30 @@ Next.js FE → FastAPI BE → CodeHub BE (DRF)
 
 ## 개발 커맨드
 
+### Dummy 모드 (사외망 / HTTP)
+
 ```bash
-# Backend (Dummy 모드)
+# Backend
 cd backend && uvicorn app.main:app --reload --port 8000
 
 # Frontend
-cd frontend && npm run dev       # 개발 서버
+cd frontend && npm run dev       # http://localhost:3000
 cd frontend && npm run build     # 프로덕션 빌드
 cd frontend && npm run lint      # ESLint
+```
+
+### SSO 연동 테스트 (사내망 / HTTPS)
+
+mkcert 인증서 사전 발급 필요 → README.md 참고
+
+```bash
+# Backend (SSL 인증서 지정)
+cd backend && uvicorn app.main:app --reload --port 8000 \
+  --ssl-keyfile ../certs/localhost-key.pem \
+  --ssl-certfile ../certs/localhost.pem
+
+# Frontend
+cd frontend && npm run dev:https  # https://localhost:3000
 ```
 
 ## 프로젝트 구조 핵심

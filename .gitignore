@@ -34,6 +34,10 @@ build/
 backend/resources/cert/*.pem
 backend/resources/cert/*.cer
 
+# 로컬 개발 SSL 인증서 (mkcert 생성, git 추적 제외)
+certs/*.pem
+certs/*.key
+
 # Misc
 *.log
 npm-debug.log*

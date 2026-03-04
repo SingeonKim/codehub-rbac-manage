@@ -86,7 +86,7 @@ def _generate_users() -> list[dict]:
             "en_full_name": en_name,
             "employee_number": f"EMP{str(1000 + i)}",
             "grade_name": _grades[grade_idx],
-            "title_code": "",
+            "title_code": None,
             "company_name": "CodeHub Inc.",
             "department_code": f"D{str(dept_idx + 1).zfill(3)}",
             "department_name": _departments[dept_idx],

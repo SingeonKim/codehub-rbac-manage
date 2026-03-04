@@ -229,23 +229,23 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 
 #### 데이터 필드
 
-| 필드 | 타입 | 설명 | 비고 |
-|------|------|------|------|
-| id | int | PK | 자동 생성 |
-| ep_id | string | SSO 식별자 | |
-| user_id | string | 사용자 ID | |
-| full_name | string | 한글 이름 | |
-| en_full_name | string | 영문 이름 | |
-| employee_number | string | 사번 | |
-| grade_name | string | 직급명 | |
-| title_code | string | 직책 코드 | |
-| company_name | string | 소속 회사명 | |
-| department_code | string | 부서 코드 | |
-| department_name | string | 부서명 | |
-| en_department_name | string | 영문 부서명 | |
-| create_time | string (ISO 8601) | 생성일시 | 자동 관리 |
-| update_time | string (ISO 8601) | 수정일시 | 자동 관리 |
-| groups | int[] | 소속 그룹 ID 목록 | M:M 관계 |
+| 필드 | 타입 | 제약조건 | 설명 | 비고 |
+|------|------|----------|------|------|
+| id | int | auto (PK) | PK | 자동 생성 |
+| ep_id | string | **required** | 임직원 고유 ID | |
+| user_id | string | **required**, unique | 사용자 ID | |
+| full_name | string \| null | **nullable** | 한글 이름 | null 가능, "" 불가 |
+| en_full_name | string \| null | **nullable** | 영문 이름 | null 가능, "" 불가 |
+| employee_number | string \| null | **nullable** | 사번 | null 가능, "" 불가 |
+| grade_name | string \| null | **nullable** | 직급명 | null 가능, "" 불가 |
+| title_code | string \| null | **nullable** | 직책 코드 | null 가능, "" 불가 |
+| company_name | string \| null | **nullable** | 소속 회사명 | null 가능, "" 불가 |
+| department_code | string \| null | **nullable** | 부서 코드 | null 가능, "" 불가 |
+| department_name | string \| null | **nullable** | 부서명 | null 가능, "" 불가 |
+| en_department_name | string \| null | **nullable** | 영문 부서명 | null 가능, "" 불가 |
+| create_time | string (ISO 8601) | auto | 생성일시 | 자동 관리 |
+| update_time | string (ISO 8601) | auto | 수정일시 | 자동 관리 |
+| groups | int[] | M2M (blank=True) | 소속 그룹 ID 목록 | 빈 배열 가능 |
 
 #### 기능 목록
 
@@ -263,13 +263,13 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 
 #### 데이터 필드
 
-| 필드 | 타입 | 설명 | 비고 |
-|------|------|------|------|
-| id | int | PK | 자동 생성 |
-| group_name | string | 그룹명 | |
-| create_time | string (ISO 8601) | 생성일시 | 자동 관리 |
-| update_time | string (ISO 8601) | 수정일시 | 자동 관리 |
-| permissions | int[] | 권한 ID 목록 | M:M 관계 |
+| 필드 | 타입 | 제약조건 | 설명 | 비고 |
+|------|------|----------|------|------|
+| id | int | auto (PK) | PK | 자동 생성 |
+| group_name | string | **required** | 그룹명 | |
+| create_time | string (ISO 8601) | auto | 생성일시 | 자동 관리 |
+| update_time | string (ISO 8601) | auto | 수정일시 | 자동 관리 |
+| permissions | int[] | M2M (blank=True) | 권한 ID 목록 | 빈 배열 가능 |
 
 #### 기능 목록
 
@@ -286,13 +286,13 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 
 #### 데이터 필드
 
-| 필드 | 타입 | 설명 | 비고 |
-|------|------|------|------|
-| id | int | PK | 자동 생성 |
-| permission_name | string | 권한명 | |
-| create_time | string (ISO 8601) | 생성일시 | 자동 관리 |
-| update_time | string (ISO 8601) | 수정일시 | 자동 관리 |
-| menus | int[] | 메뉴 ID 목록 | M:M 관계 |
+| 필드 | 타입 | 제약조건 | 설명 | 비고 |
+|------|------|----------|------|------|
+| id | int | auto (PK) | PK | 자동 생성 |
+| permission_name | string | **required** | 권한명 | |
+| create_time | string (ISO 8601) | auto | 생성일시 | 자동 관리 |
+| update_time | string (ISO 8601) | auto | 수정일시 | 자동 관리 |
+| menus | int[] | M2M (blank=True) | 메뉴 ID 목록 | 빈 배열 가능 |
 
 #### 기능 목록
 
@@ -309,11 +309,14 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 
 #### 데이터 필드
 
-| 필드 | 타입 | 설명 | 비고 |
-|------|------|------|------|
-| id | int | PK | 자동 생성 |
-| menu_name | string | 메뉴명 | |
-| permission_code | string | 메뉴 권한 코드 | |
+| 필드 | 타입 | 제약조건 | 설명 | 비고 |
+|------|------|----------|------|------|
+| id | int | auto (PK) | PK | 자동 생성 |
+| menu_name | string | **required** | 메뉴명 | |
+| permission_code | string | **required**, unique | 메뉴 권한 코드 | |
+| parent_menu | int \| null | **nullable** (FK) | 부모 메뉴 ID | 자기참조, null이면 최상위 |
+| create_time | string (ISO 8601) | auto | 생성일시 | 자동 관리 |
+| update_time | string (ISO 8601) | auto | 수정일시 | 자동 관리 |
 
 #### 기능 목록
 

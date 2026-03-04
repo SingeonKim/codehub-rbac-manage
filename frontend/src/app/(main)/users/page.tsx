@@ -85,17 +85,32 @@ function UserFormDialog({
     setForm((f) => ({ ...f, [key]: value }));
 
   const handleSubmit = async () => {
-    if (!form.user_id || !form.full_name) {
-      toast.error("사용자 ID와 이름을 입력하세요.");
+    if (!form.ep_id || !form.user_id || !form.full_name) {
+      toast.error("EP ID, 사용자 ID, 이름을 입력하세요.");
       return;
     }
+
+    // nullable 필드: 빈 문자열을 null로 변환
+    // Django CharField(null=True, blank 미지정)는 null은 허용하지만 ""는 거부함
+    const nullableFields = [
+      "full_name", "en_full_name", "employee_number", "grade_name",
+      "title_code", "company_name", "department_code", "department_name",
+      "en_department_name",
+    ] as const;
+    const payload = { ...form };
+    for (const field of nullableFields) {
+      if (payload[field] === "") {
+        (payload as Record<string, unknown>)[field] = null;
+      }
+    }
+
     setLoading(true);
     try {
       if (isEdit) {
-        await api.patch<User>(`/v1/users/${user!.id}`, form as UserUpdate);
+        await api.patch<User>(`/v1/users/${user!.id}`, payload as UserUpdate);
         toast.success("유저가 수정되었습니다.");
       } else {
-        await api.post<User>("/v1/users", form as UserCreate);
+        await api.post<User>("/v1/users", payload as UserCreate);
         toast.success("유저가 생성되었습니다.");
       }
       onSaved();
@@ -123,7 +138,7 @@ function UserFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>EP ID</Label>
+            <Label>EP ID *</Label>
             <Input
               value={form.ep_id}
               onChange={(e) => set("ep_id", e.target.value)}
@@ -133,7 +148,7 @@ function UserFormDialog({
           <div className="space-y-1.5">
             <Label>한글 이름 *</Label>
             <Input
-              value={form.full_name}
+              value={form.full_name ?? ""}
               onChange={(e) => set("full_name", e.target.value)}
               placeholder="예: 홍길동"
             />
@@ -141,7 +156,7 @@ function UserFormDialog({
           <div className="space-y-1.5">
             <Label>영문 이름</Label>
             <Input
-              value={form.en_full_name}
+              value={form.en_full_name ?? ""}
               onChange={(e) => set("en_full_name", e.target.value)}
               placeholder="예: Gil-Dong Hong"
             />
@@ -149,7 +164,7 @@ function UserFormDialog({
           <div className="space-y-1.5">
             <Label>사번</Label>
             <Input
-              value={form.employee_number}
+              value={form.employee_number ?? ""}
               onChange={(e) => set("employee_number", e.target.value)}
               placeholder="예: EMP1001"
             />
@@ -157,7 +172,7 @@ function UserFormDialog({
           <div className="space-y-1.5">
             <Label>직급</Label>
             <Input
-              value={form.grade_name}
+              value={form.grade_name ?? ""}
               onChange={(e) => set("grade_name", e.target.value)}
               placeholder="예: 대리"
             />
@@ -165,7 +180,7 @@ function UserFormDialog({
           <div className="space-y-1.5">
             <Label>회사명</Label>
             <Input
-              value={form.company_name}
+              value={form.company_name ?? ""}
               onChange={(e) => set("company_name", e.target.value)}
               placeholder="예: CodeHub Inc."
             />
@@ -173,7 +188,7 @@ function UserFormDialog({
           <div className="space-y-1.5">
             <Label>부서명</Label>
             <Input
-              value={form.department_name}
+              value={form.department_name ?? ""}
               onChange={(e) => set("department_name", e.target.value)}
               placeholder="예: 플랫폼개발팀"
             />

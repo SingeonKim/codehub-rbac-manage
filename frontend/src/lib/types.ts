@@ -14,47 +14,47 @@ export interface User {
   id: number;
   ep_id: string;
   user_id: string;
-  full_name: string;
-  en_full_name: string;
-  employee_number: string;
-  grade_name: string;
-  title_code: string;
-  company_name: string;
-  department_code: string;
-  department_name: string;
-  en_department_name: string;
+  full_name: string | null;           // nullable (Django: null=True)
+  en_full_name: string | null;
+  employee_number: string | null;
+  grade_name: string | null;
+  title_code: string | null;
+  company_name: string | null;
+  department_code: string | null;
+  department_name: string | null;
+  en_department_name: string | null;
   create_time: string;
   update_time: string;
   groups: number[];
 }
 
 export interface UserCreate {
-  ep_id?: string;
+  ep_id: string;                      // required (Django: not null, not blank)
   user_id: string;
-  full_name: string;
-  en_full_name?: string;
-  employee_number?: string;
-  grade_name?: string;
-  title_code?: string;
-  company_name?: string;
-  department_code?: string;
-  department_name?: string;
-  en_department_name?: string;
+  full_name?: string | null;          // nullable — null 가능, "" 불가
+  en_full_name?: string | null;
+  employee_number?: string | null;
+  grade_name?: string | null;
+  title_code?: string | null;
+  company_name?: string | null;
+  department_code?: string | null;
+  department_name?: string | null;
+  en_department_name?: string | null;
   groups?: number[];
 }
 
 export interface UserUpdate {
   ep_id?: string;
   user_id?: string;
-  full_name?: string;
-  en_full_name?: string;
-  employee_number?: string;
-  grade_name?: string;
-  title_code?: string;
-  company_name?: string;
-  department_code?: string;
-  department_name?: string;
-  en_department_name?: string;
+  full_name?: string | null;          // nullable — null 가능, "" 불가
+  en_full_name?: string | null;
+  employee_number?: string | null;
+  grade_name?: string | null;
+  title_code?: string | null;
+  company_name?: string | null;
+  department_code?: string | null;
+  department_name?: string | null;
+  en_department_name?: string | null;
   groups?: number[];
 }
 

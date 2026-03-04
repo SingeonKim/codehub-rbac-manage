@@ -16,9 +16,9 @@ class PaginatedResponse(BaseModel):
 # --- 유저 ---
 
 class UserBase(BaseModel):
-    ep_id: Optional[str] = None
-    user_id: str
-    full_name: str
+    ep_id: str                                    # 필수 (Django: not null, not blank)
+    user_id: str                                  # 필수 (Django: not null, not blank, unique)
+    full_name: Optional[str] = None               # nullable (Django: null=True) — null 가능, "" 불가
     en_full_name: Optional[str] = None
     employee_number: Optional[str] = None
     grade_name: Optional[str] = None

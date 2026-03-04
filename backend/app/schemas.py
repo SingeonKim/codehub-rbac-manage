@@ -123,11 +123,6 @@ class MenuResponse(MenuBase):
 
 # --- Knox 일괄 생성 ---
 
-class ManualCreateRequest(BaseModel):
-    """Knox ID를 쉼표로 구분하여 일괄 생성 요청"""
-    knox_ids: str  # comma-separated Knox ID (최대 100명)
-
-
 class ManualCreateResponse(BaseModel):
     """Knox 일괄 생성 결과"""
     count_is_success: int

@@ -126,11 +126,11 @@ async def create_user(request: Request):
 
 
 @router.post("/users/manual-create")
-async def manual_create_users(request: Request):
+async def manual_create_users(request: Request, knox_id: str = Query(...)):
     """Knox ID 일괄 생성 — CodeHub BE로 프록시 후 성공 유저가 있으면 캐시 무효화"""
     token = get_token_from_request(request)
-    body = await request.json()
-    result = await client.proxy_request("POST", BE_PATHS["manual_create"], token, body)
+    # knox_id를 쿼리스트링으로 CodeHub BE에 그대로 전달
+    result = await client.proxy_request("POST", f"{BE_PATHS['manual_create']}?knox_id={knox_id}", token)
     # 성공 유저가 있으면 유저 캐시 무효화 (목록 새로고침 시 최신 데이터 반영)
     if result and result.get("count_is_success", 0) > 0:
         cache.invalidate(CACHE_KEYS["users"])

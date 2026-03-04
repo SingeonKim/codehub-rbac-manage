@@ -14,7 +14,7 @@ from app.schemas import (
     PermissionCreate, PermissionUpdate, PermissionResponse,
     MenuCreate, MenuUpdate, MenuResponse,
     PaginatedResponse,
-    ManualCreateRequest, ManualCreateResponse,
+    ManualCreateResponse,
 )
 from app.mock.data import USERS, GROUPS, PERMISSIONS, MENUS, NEXT_IDS
 
@@ -129,10 +129,10 @@ async def delete_user(user_id: int):
 
 
 @router.post("/users/manual-create")
-async def manual_create_users(data: ManualCreateRequest):
+async def manual_create_users(knox_id: str = Query(...)):
     """Knox ID 일괄 생성 Mock — 기존 Mock 유저 user_id와 일치하면 성공, 아니면 not_found로 처리"""
-    # 입력된 Knox ID를 파싱 (공백 제거)
-    knox_ids = [kid.strip() for kid in data.knox_ids.split(",") if kid.strip()]
+    # 쿼리 파라미터로 받은 comma-separated Knox ID 파싱 (공백 제거)
+    knox_ids = [kid.strip() for kid in knox_id.split(",") if kid.strip()]
 
     # Mock 로직: 기존 USERS에 존재하는 user_id면 이미 등록된 것이므로 성공 처리,
     # 존재하지 않으면 "test"로 시작하면 not_found, 그 외에는 새 유저로 생성하여 성공

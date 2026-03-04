@@ -12,7 +12,7 @@ codehub-rbac-model-api-spec.md
 
 
 ## 유저
-- API: {CodehubBe}/api/v1/commons/users/
+- API: {CodehubBe}/api/v1/commons/user/
 - List Action에서 다음 컬럼에 대해 Comma-separated Query Param지원
     - id
     - user_id

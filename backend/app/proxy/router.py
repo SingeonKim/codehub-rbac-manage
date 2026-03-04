@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api/v1")
 
 # CodeHub BE API 경로
 BE_PATHS = {
-    "users": "/api/v1/commons/users/",
+    "users": "/api/v1/commons/user/",
     "groups": "/api/v1/commons/group/",
     "permissions": "/api/v1/commons/permission/",
     "menus": "/api/v1/commons/menu/",

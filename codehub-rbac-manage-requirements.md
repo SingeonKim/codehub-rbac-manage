@@ -446,8 +446,8 @@ CUD 요청은 CodeHub BE로 전달하고, 성공 시 해당 엔티티의 캐시�
 
 | FastAPI 경로 | CodeHub BE 경로 | 비고 |
 |-------------|----------------|------|
-| `/api/v1/users/` | `{CodehubBe}/api/v1/commons/users/` | List: 캐시 기반 페이지네이션 |
-| `/api/v1/users/{id}/` | `{CodehubBe}/api/v1/commons/users/{id}/` | Detail/Update/Delete: 프록시 |
+| `/api/v1/users/` | `{CodehubBe}/api/v1/commons/user/` | List: 캐시 기반 페이지네이션 |
+| `/api/v1/users/{id}/` | `{CodehubBe}/api/v1/commons/user/{id}/` | Detail/Update/Delete: 프록시 |
 | `/api/v1/groups/` | `{CodehubBe}/api/v1/commons/group/` | List: 캐시 기반 페이지네이션 |
 | `/api/v1/groups/{id}/` | `{CodehubBe}/api/v1/commons/group/{id}/` | Detail/Update/Delete: 프록시 |
 | `/api/v1/permissions/` | `{CodehubBe}/api/v1/commons/permission/` | List: 캐시 기반 페이지네이션 |
@@ -470,7 +470,7 @@ CUD 요청은 CodeHub BE로 전달하고, 성공 시 해당 엔티티의 캐시�
 
 모든 요청에는 `Authorization: Bearer {token}` 헤더가 필요하다.
 
-#### 유저 API: `{CodehubBe}/api/v1/commons/users/`
+#### 유저 API: `{CodehubBe}/api/v1/commons/user/`
 
 | 메서드 | 경로 | 설명 | 요청 본문 |
 |--------|------|------|----------|
@@ -553,7 +553,7 @@ DRF 표준 패턴에 따라, 관계는 엔티티 수정 시 관계 필드(배열
 
 **예시: 유저의 그룹 변경**
 ```
-PATCH /api/v1/commons/users/{id}/
+PATCH /api/v1/commons/user/{id}/
 Body: { "groups": [1, 3, 5] }
 ```
 → 해당 유저의 그룹이 [1, 3, 5]로 전체 교체됨

@@ -67,6 +67,7 @@ type SortField =
   | "user_id"
   | "department_name"
   | "department_code"
+  | "create_time"
   | "update_time";
 type SortOrder = "asc" | "desc";
 
@@ -633,6 +634,7 @@ export default function UsersPage() {
               <SortableHeader field="user_id" label="사용자 ID" current={sortBy} order={sortOrder} onSort={handleSort} />
               <SortableHeader field="department_name" label="부서" current={sortBy} order={sortOrder} onSort={handleSort} />
               <SortableHeader field="department_code" label="부서 코드" current={sortBy} order={sortOrder} onSort={handleSort} />
+              <SortableHeader field="create_time" label="생성 시간" current={sortBy} order={sortOrder} onSort={handleSort} />
               <SortableHeader field="update_time" label="수정 시간" current={sortBy} order={sortOrder} onSort={handleSort} />
               <th className="px-4 py-3 font-medium">그룹</th>
               <th className="w-24 px-4 py-3 font-medium text-right">액션</th>
@@ -641,13 +643,13 @@ export default function UsersPage() {
           <tbody>
             {!data ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                   로딩 중...
                 </td>
               </tr>
             ) : data.items.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -664,6 +666,9 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {user.department_code || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {formatDate(user.create_time)}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(user.update_time)}

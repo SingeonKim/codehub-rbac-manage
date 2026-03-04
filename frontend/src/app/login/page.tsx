@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
-import { isAuthenticated } from "@/lib/auth";
+import { isAuthenticated, hasRbacAccess } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  // 이미 인증된 상태면 대시보드로 이동
+  // 이미 인증 + 권한 모두 확인된 상태면 대시보드로 이동
+  // 토큰만 있고 권한 플래그 없는 경우에는 로그인 화면을 그대로 표시
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (isAuthenticated() && hasRbacAccess()) {
       router.replace("/");
     }
   }, [router]);

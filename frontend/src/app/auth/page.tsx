@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setToken } from "@/lib/auth";
+import { setToken, removeToken, setHasAccess } from "@/lib/auth";
 import { api } from "@/lib/api";
 import type { AccessiblePermission } from "@/lib/types";
 
@@ -30,12 +30,18 @@ function AuthCallbackContent() {
         );
 
         if (hasAccess) {
+          // 권한 확인 성공 → 플래그 저장 후 대시보드로
+          setHasAccess();
           router.replace("/");
         } else {
+          // 권한 없음 → 토큰 삭제 후 에러 표시 (토큰이 남으면 /login에서 대시보드로 튕김)
+          removeToken();
           setError("CodeHub RBAC 관리 권한이 없습니다. 관리자에게 문의하세요.");
         }
       })
       .catch(() => {
+        // API 오류 → 토큰 삭제 후 에러 표시
+        removeToken();
         setError("권한 확인 중 오류가 발생했습니다.");
       });
   }, [searchParams, router]);

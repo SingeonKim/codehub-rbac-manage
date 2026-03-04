@@ -254,7 +254,7 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 | U-01 | 유저 목록 조회 | 서버사이드 페이지네이션 (FastAPI 캐시 기반), 테이블 형태, 기본 page_size=20 |
 | U-02 | 유저 검색 | user_id 완전 일치, full_name 완전 일치, department_name 부분 일치, department_code 완전 일치 (FastAPI 인메모리 필터링) |
 | U-03 | 그룹별 유저 필터링 | 특정 그룹에 속한 유저만 필터링. **단, defaultUser 등 전체 유저 포함 그룹은 필터 드롭다운에서 제외** |
-| U-04 | 유저 생성 | 신규 유저 등록 폼 |
+| U-04 | 유저 생성 | 2가지 방식 지원: (1) 직접 입력하여 생성 — 모든 필드를 수동 입력, (2) Knox에서 추가하기 — Knox ID(comma-separated, 최대 100명)를 입력하면 CodeHub BE의 manual-create API로 일괄 생성. 결과(성공/미발견/에러)를 다이얼로그에 표시 |
 | U-05 | 유저 수정 | 기존 유저 정보 수정 |
 | U-06 | 유저 삭제 | 유저 삭제 (확인 다이얼로그 포함) |
 | U-07 | 유저-그룹 관계 관리 | 유저에 그룹 추가/제거 |
@@ -382,7 +382,7 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  유저 관리                                          [+ 유저 생성] │
+│  유저 관리                                      [+ 유저 생성 ▾] │
 ├──────────────────────────────────────────────────────────────────┤
 │  [검색어 입력]  [그룹 필터 드롭다운]     [검색 버튼]               │
 │  (이름, 사용자 ID, 부서명, 부서 코드 검색)                         │
@@ -398,7 +398,30 @@ User ◆──M:M──◆ Group ◆──M:M──◆ Permission ◆──M:M�
 ```
 - ↕ 표시: 클릭 가능한 정렬 헤더 (활성 컬럼은 방향 화살표 표시)
 
-- **유저 생성/수정**: 모달 또는 사이드 패널로 폼 제공
+- **유저 생성**: 드롭다운 버튼으로 2가지 생성 방식 선택
+  - "직접 입력하여 생성": 기존 UserFormDialog (모든 필드 수동 입력)
+  - "Knox에서 추가하기": KnoxCreateDialog (Knox ID 일괄 입력)
+
+```
+KnoxCreateDialog:
+┌─────────────────────────────────────────────┐
+│  Knox에서 추가하기                        [X] │
+├─────────────────────────────────────────────┤
+│  Knox ID를 쉼표로 구분하여 입력하세요          │
+│  (최대 100명)                                │
+│  ┌─────────────────────────────────────────┐ │
+│  │ abc.kim, test.abc, hong.gd              │ │
+│  └─────────────────────────────────────────┘ │
+│                            [취소] [추가하기]  │
+├─────────────────────────────────────────────┤
+│  (결과 표시 영역 — API 호출 후 표시)            │
+│  ✓ 성공: 2명 — jy.kweon, yoonble.kim        │
+│  ✗ 미발견: 1명 — test.kdkd                   │
+│  ✗ 서버 에러: 0명                             │
+└─────────────────────────────────────────────┘
+```
+
+- **유저 수정**: 모달 또는 사이드 패널로 폼 제공
 - **유저-그룹 관계 관리**: 유저 상세/수정 화면 내에서 그룹 추가/제거
   - 현재 소속 그룹 목록 표시 (태그 형태, X 버튼으로 제거)
   - 그룹 추가 드롭다운/검색으로 새 그룹 추가
@@ -460,6 +483,7 @@ CUD 요청은 CodeHub BE로 전달하고, 성공 시 해당 엔티티의 캐시�
 |-------------|----------------|------|
 | `/api/v1/users/` | `{CodehubBe}/api/v1/commons/user/` | List: 캐시 기반 페이지네이션 |
 | `/api/v1/users/{id}/` | `{CodehubBe}/api/v1/commons/user/{id}/` | Detail/Update/Delete: 프록시 |
+| `/api/v1/users/manual-create` | `{CodehubBe}/api/v1/commons/user-etc/manual-create/` | Knox ID 일괄 생성: 프록시 (성공 시 유저 캐시 무효화) |
 | `/api/v1/groups/` | `{CodehubBe}/api/v1/commons/group/` | List: 캐시 기반 페이지네이션 |
 | `/api/v1/groups/{id}/` | `{CodehubBe}/api/v1/commons/group/{id}/` | Detail/Update/Delete: 프록시 |
 | `/api/v1/permissions/` | `{CodehubBe}/api/v1/commons/permission/` | List: 캐시 기반 페이지네이션 |
@@ -494,6 +518,24 @@ CUD 요청은 CodeHub BE로 전달하고, 성공 시 해당 엔티티의 캐시�
 | PUT | `/{id}/` | 유저 전체 수정 | 유저 필드 전체 (JSON) |
 | PATCH | `/{id}/` | 유저 부분 수정 | 변경할 필드만 (JSON) |
 | DELETE | `/{id}/` | 유저 삭제 | - |
+
+#### 유저 일괄 생성 API: `{CodehubBe}/api/v1/commons/user-etc/manual-create/`
+
+| 메서드 | 경로 | 설명 | 요청 본문 |
+|--------|------|------|----------|
+| POST | `/` | Knox ID로 유저 일괄 생성 | `{ "knox_ids": "abc.kim,test.abc" }` (comma-separated, 최대 100명) |
+
+**응답 (200):**
+```json
+{
+  "count_is_success": 2,
+  "count_is_not_found": 1,
+  "count_is_internal_server_error": 0,
+  "success_user_ids": ["jy.kweon", "yoonble.kim"],
+  "not_found_user_ids": ["test.kdkd"],
+  "internal_server_error_user_ids": []
+}
+```
 
 **목록 조회 Query Parameters:**
 - `id`, `user_id`, `full_name`, `employee_number`: comma-separated 필터

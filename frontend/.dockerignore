@@ -1,0 +1,23 @@
+node_modules/
+.next/
+out/
+.git
+.gitignore
+
+# 환경 파일은 이미지에 포함하지 않는다 (k8s ConfigMap/Secret으로 주입)
+.env
+.env.*
+!.env.example
+
+# 로컬 HTTPS 개발용
+../certs
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# 빌드/테스트 산출물
+coverage/
+*.log
+npm-debug.log*
